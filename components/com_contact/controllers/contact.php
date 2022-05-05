@@ -139,12 +139,24 @@ class ContactControllerContact extends JControllerForm
 		// Validation succeeded, continue with custom handlers
 		$results = $dispatcher->trigger('onValidateContact', array(&$contact, &$data));
 
+		$passValidation = true;
+
 		foreach ($results as $result)
 		{
 			if ($result instanceof Exception)
 			{
-				return false;
+				$passValidation = false;
+				$app->enqueueMessage($result->getMessage(), 'error');
 			}
+		}
+
+		if (!$passValidation)
+		{
+			$app->setUserState('com_contact.contact.data', $data);
+
+			$this->setRedirect(JRoute::_('index.php?option=com_contact&view=contact&id=' . $id . '&catid=' . $contact->catid, false));
+
+			return false;
 		}
 
 		// Passed Validation: Process the contact plugins to integrate with other applications
